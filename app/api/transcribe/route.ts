@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,19 +12,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Convert the File to a format OpenAI accepts
+    // Convert the File to a format Groq accepts
     const arrayBuffer = await audioFile.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     
-    // Create a File-like object for OpenAI
-    const file = new File([buffer], 'audio.webm', { type: 'audio/webm' })
+    // Use Groq's Whisper endpoint
+    const groqFormData = new FormData()
+    groqFormData.append('file', new Blob([buffer]), 'audio.webm')
+    groqFormData.append('model', 'whisper-large-v3')
+    groqFormData.append('response_format', 'json')
 
-    const transcription = await openai.audio.transcriptions.create({
-      file: file,
-      model: 'whisper-1',
+    const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: groqFormData,
     })
 
-    return NextResponse.json({ text: transcription.text })
+    if (!response.ok) {
+      throw new Error(`Groq API error: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return NextResponse.json({ text: data.text })
   } catch (error: any) {
     console.error('Transcription error:', error)
     return NextResponse.json(

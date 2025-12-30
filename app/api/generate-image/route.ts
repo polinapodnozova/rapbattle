@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,21 +11,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate an epic rap battle themed image
-    const prompt = `Epic rap battle scene featuring ${topic}. Vibrant hip-hop aesthetic with graffiti style, bold colors (purple, pink, gold), microphones, spotlights, urban street art vibe. Abstract and stylized, energetic atmosphere. No text or words in the image.`
+    // Use the side the user is defending for more relevant images
+    const searchQuery = userSide || topic.split(' vs ')[0]
+    const keywords = searchQuery.toLowerCase().replace(/[^a-z\s]/g, '').trim()
 
-    const response = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: prompt,
-      n: 1,
-      size: "1024x1024",
-      quality: "standard",
+    // Search Pexels for relevant image
+    const response = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(keywords + ' vibrant colorful')}&per_page=1&orientation=landscape`, {
+      headers: {
+        'Authorization': process.env.PEXELS_API_KEY || '',
+      },
     })
 
-    const imageUrl = response.data[0]?.url
+    if (!response.ok) {
+      throw new Error(`Pexels API error: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    const imageUrl = data.photos?.[0]?.src?.large2x
 
     if (!imageUrl) {
-      throw new Error('No image URL returned')
+      throw new Error('No image found')
     }
 
     return NextResponse.json({ imageUrl })

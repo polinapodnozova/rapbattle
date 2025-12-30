@@ -29,11 +29,15 @@ export default function Home() {
   const [battleHistory, setBattleHistory] = useState<Array<{userLyrics: string, aiLyrics: string, userScore: number, aiScore: number}>>([])
   const [battleImage, setBattleImage] = useState<string | null>(null)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+  const [isBeatPlaying, setIsBeatPlaying] = useState(false)
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const beatAudioRef = useRef<HTMLAudioElement | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const beatPlayingRef = useRef<boolean>(false)
 
   const topics = [
     { topic: 'Pizza vs Burgers', sides: ['Pizza', 'Burgers'] },
@@ -56,6 +60,144 @@ export default function Home() {
     { topic: 'Pineapple on Pizza', sides: ['Yes Pineapple', 'No Pineapple'] }
   ]
 
+  const startBeat = () => {
+    // Don't start if already playing
+    if (beatPlayingRef.current) {
+      return
+    }
+    
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext()
+    }
+    
+    beatPlayingRef.current = true
+    setIsBeatPlaying(true)
+    
+    // Create a fire boom-bap beat with hi-hats
+    const ctx = audioContextRef.current
+    const tempo = 90 // BPM
+    const beatLength = 60 / tempo // One beat
+    
+    const playBeat = () => {
+      if (!beatPlayingRef.current) return
+      
+      const now = ctx.currentTime
+      
+      // KICK DRUM - Deep and punchy (beats 1 and 3)
+      const createKick = (time: number) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.frequency.setValueAtTime(150, time)
+        osc.frequency.exponentialRampToValueAtTime(50, time + 0.15)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.setValueAtTime(1.2, time)
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3)
+        osc.start(time)
+        osc.stop(time + 0.3)
+      }
+      
+      createKick(now)
+      createKick(now + beatLength * 2)
+      
+      // SNARE - Sharp and snappy (beats 2 and 4)
+      const createSnare = (time: number) => {
+        const osc = ctx.createOscillator()
+        const noise = ctx.createBufferSource()
+        const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate)
+        const data = noiseBuffer.getChannelData(0)
+        for (let i = 0; i < data.length; i++) {
+          data[i] = Math.random() * 2 - 1
+        }
+        noise.buffer = noiseBuffer
+        
+        const noiseGain = ctx.createGain()
+        const oscGain = ctx.createGain()
+        
+        osc.frequency.value = 180
+        osc.connect(oscGain)
+        noise.connect(noiseGain)
+        oscGain.connect(ctx.destination)
+        noiseGain.connect(ctx.destination)
+        
+        oscGain.gain.setValueAtTime(0.3, time)
+        oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.1)
+        noiseGain.gain.setValueAtTime(0.6, time)
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.15)
+        
+        osc.start(time)
+        noise.start(time)
+        osc.stop(time + 0.1)
+        noise.stop(time + 0.15)
+      }
+      
+      createSnare(now + beatLength)
+      createSnare(now + beatLength * 3)
+      
+      // HI-HATS - 8th notes
+      const createHiHat = (time: number, closed: boolean = true) => {
+        const noise = ctx.createBufferSource()
+        const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate)
+        const data = noiseBuffer.getChannelData(0)
+        for (let i = 0; i < data.length; i++) {
+          data[i] = Math.random() * 2 - 1
+        }
+        noise.buffer = noiseBuffer
+        
+        const filter = ctx.createBiquadFilter()
+        filter.type = 'highpass'
+        filter.frequency.value = 7000
+        
+        const gain = ctx.createGain()
+        noise.connect(filter)
+        filter.connect(gain)
+        gain.connect(ctx.destination)
+        
+        gain.gain.setValueAtTime(closed ? 0.3 : 0.5, time)
+        gain.gain.exponentialRampToValueAtTime(0.01, time + (closed ? 0.03 : 0.08))
+        
+        noise.start(time)
+        noise.stop(time + (closed ? 0.03 : 0.08))
+      }
+      
+      // Hi-hat pattern
+      for (let i = 0; i < 8; i++) {
+        const isOpen = i === 3 || i === 7
+        createHiHat(now + beatLength * i / 2, !isOpen)
+      }
+      
+      // 808 Bass hits
+      const createBass = (time: number, note: number) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.frequency.setValueAtTime(note, time)
+        osc.frequency.exponentialRampToValueAtTime(note * 0.5, time + 0.2)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.setValueAtTime(0.6, time)
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3)
+        osc.start(time)
+        osc.stop(time + 0.3)
+      }
+      
+      createBass(now, 65) // Low F
+      createBass(now + beatLength * 2, 55) // Low A
+      
+      setTimeout(playBeat, beatLength * 4 * 1000)
+    }
+    
+    playBeat()
+  }
+  
+  const stopBeat = () => {
+    beatPlayingRef.current = false
+    setIsBeatPlaying(false)
+    if (audioContextRef.current) {
+      audioContextRef.current.close()
+      audioContextRef.current = null
+    }
+  }
+
   const startGame = async () => {
     const randomTopicData = topics[Math.floor(Math.random() * topics.length)]
     const randomSide = randomTopicData.sides[Math.floor(Math.random() * 2)]
@@ -66,13 +208,12 @@ export default function Home() {
     setBattle(null)
     setAudioUrl(null)
     setTypedLyrics('')
-    
-    // Generate battle image
-    setIsGeneratingImage(true)
     setGameState('recording')
+    startBeat()
     
+    // Generate background image
+    setIsGeneratingImage(true)
     try {
-      console.log('Generating image for topic:', randomTopicData.topic)
       const imageResponse = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -81,10 +222,7 @@ export default function Home() {
       
       if (imageResponse.ok) {
         const { imageUrl } = await imageResponse.json()
-        console.log('Image generated:', imageUrl)
         setBattleImage(imageUrl)
-      } else {
-        console.error('Image generation failed:', await imageResponse.text())
       }
     } catch (error) {
       console.error('Failed to generate image:', error)
@@ -99,13 +237,21 @@ export default function Home() {
     setBattle(null)
     setAudioUrl(null)
     setTypedLyrics('')
+    // Beat already playing, don't restart
   }
 
   const resetGame = () => {
     setRoundNumber(1)
     setGameState('intro')
     setBattleImage(null)
+    stopBeat()
   }
+  
+  useEffect(() => {
+    return () => {
+      stopBeat()
+    }
+  }, [])
 
   const startRecording = async () => {
     try {
@@ -382,6 +528,13 @@ export default function Home() {
                 🎯 <strong>You're defending: {userSide}</strong>
               </div>
             </div>
+
+            <button 
+              className={styles.beatToggle}
+              onClick={() => isBeatPlaying ? stopBeat() : startBeat()}
+            >
+              {isBeatPlaying ? '🔊 Beat ON' : '🔇 Beat OFF'}
+            </button>
 
             <div className={styles.inputModeToggle}>
               <button 

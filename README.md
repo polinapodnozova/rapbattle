@@ -1,13 +1,13 @@
 # 🎤 AI Rap Battle Game
 
-An addictive rap battle game where you rap against an AI opponent using your voice! The game uses OpenAI's Whisper for speech recognition, GPT-4 for generating creative rap responses, and TTS for AI voice output.
+An addictive rap battle game where you rap against an AI opponent using your voice! The game uses Groq's Whisper for speech recognition, Llama 3.1 70B for generating creative rap responses, and ElevenLabs for AI voice output.
 
 ## 🎮 Features
 
 - **Voice Input**: Rap into your microphone (up to 30 seconds)
-- **Speech-to-Text**: Powered by OpenAI Whisper API
-- **AI Opponent**: GPT-4 generates creative, contextual rap responses
-- **Text-to-Speech**: AI performs its rap back to you
+- **Speech-to-Text**: Powered by Groq's Whisper API
+- **AI Opponent**: Llama 3.1 70B generates creative, contextual rap responses
+- **Text-to-Speech**: ElevenLabs AI performs its rap back to you
 - **Scoring System**: Automatic scoring based on lyrics quality
 - **Random Topics**: Get different battle topics each round
 - **Beautiful UI**: Animated, responsive design with visual effects
@@ -17,7 +17,8 @@ An addictive rap battle game where you rap against an AI opponent using your voi
 ### Prerequisites
 
 - Node.js 18+ installed
-- OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
+- Groq API key ([Get one here](https://console.groq.com/keys)) - **FREE!**
+- ElevenLabs API key ([Get one here](https://elevenlabs.io)) - Optional, for voice output
 - Microphone access in your browser
 
 ### Installation
@@ -29,15 +30,18 @@ npm install
 
 2. **Set up environment variables**
 
-Copy the example file and add your OpenAI API key:
+Copy the example file and add your API keys:
 ```bash
 copy .env.local.example .env.local
 ```
 
-Edit `.env.local` and add your API key:
+Edit `.env.local` and add your keys:
 ```
-OPENAI_API_KEY=sk-your-actual-api-key-here
+GROQ_API_KEY=gsk_your-groq-key-here
+ELEVENLABS_API_KEY=your-elevenlabs-key-here
 ```
+
+**Note**: ElevenLabs is optional. Leave it empty if you don't want voice output.
 
 3. **Run the development server**
 ```bash
@@ -63,9 +67,9 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 - **Frontend**: Next.js 14, React, TypeScript
 - **Styling**: CSS Modules with animations
 - **APIs**:
-  - OpenAI Whisper (Speech-to-Text)
-  - OpenAI GPT-4 (Rap generation)
-  - OpenAI TTS (Text-to-Speech)
+  - Groq Whisper (Speech-to-Text) - FREE!
+  - Groq Llama 3.1 70B (Rap generation) - FREE!
+  - ElevenLabs TTS (Text-to-Speech) - Free tier available
 
 ## 📁 Project Structure
 
@@ -73,9 +77,9 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 rapbattle/
 ├── app/
 │   ├── api/
-│   │   ├── transcribe/    # Whisper STT endpoint
-│   │   ├── battle/        # GPT-4 rap generation
-│   │   └── tts/           # Text-to-speech
+│   │   ├── transcribe/    # Groq Whisper STT endpoint
+│   │   ├── battle/        # Llama 3.1 70B rap generation
+│   │   └── tts/           # ElevenLabs TTS
 │   ├── page.tsx           # Main game component
 │   ├── page.module.css    # Game styles
 │   ├── layout.tsx         # Root layout
@@ -94,14 +98,16 @@ rapbattle/
 - Visual recording indicator with timer
 
 ### Speech-to-Text
-- OpenAI Whisper API handles audio transcription
+- Groq's Whisper API handles audio transcription
 - Supports various audio formats
 - Accurate even with background noise
+- Lightning fast inference
 
 ### AI Battle Logic
-- GPT-4 analyzes your lyrics and the topic
+- Llama 3.1 70B analyzes your lyrics and the topic
 - Generates contextual, creative responses
 - Maintains competitive but playful tone
+- Super fast response times with Groq
 
 ### Scoring System
 - Word count (optimal: 20-200 words)
@@ -111,9 +117,10 @@ rapbattle/
 - Random variation for unpredictability
 
 ### Text-to-Speech
-- Uses "Onyx" voice (deep, rap-appropriate)
+- Uses ElevenLabs for natural-sounding voice
 - Plays automatically after AI response
 - Skip option available
+- Optional (can be disabled)
 
 ## 🎨 Customization Ideas
 
@@ -127,12 +134,18 @@ rapbattle/
 
 ## 💰 API Costs
 
-Approximate costs per battle:
-- Whisper (30s audio): ~$0.01
-- GPT-4 (rap generation): ~$0.02-0.05
-- TTS (AI response): ~$0.02
+**Groq is FREE!** 🎉
 
-Total: **~$0.05 per battle**
+Groq free tier includes:
+- 14,400 requests per day
+- Whisper transcription - FREE
+- Llama 3.1 70B - FREE
+
+ElevenLabs:
+- 10,000 characters/month free
+- ~$0.00 for moderate use
+
+Total: **FREE for demos and light usage!**
 
 ## 🐛 Troubleshooting
 
@@ -142,13 +155,13 @@ Total: **~$0.05 per battle**
 - Check browser compatibility (Chrome, Firefox, Edge recommended)
 
 **API errors?**
-- Verify your OpenAI API key is correct in `.env.local`
-- Check your OpenAI account has credits
-- Ensure you're using a paid OpenAI account (Whisper, GPT-4, TTS require it)
+- Verify your Groq API key is correct in `.env.local`
+- Check your Groq account is active at [console.groq.com](https://console.groq.com)
+- ElevenLabs key is optional - app works without voice
 
 **Slow responses?**
-- GPT-4 can take 5-10 seconds to generate responses
-- Consider using GPT-3.5-turbo for faster (but less creative) responses
+- Groq is super fast! Most responses in 1-2 seconds
+- If slow, check your internet connection
 
 ## 📝 License
 

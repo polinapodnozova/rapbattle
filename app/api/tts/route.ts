@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,14 +11,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const mp3 = await openai.audio.speech.create({
-      model: 'tts-1',
-      voice: 'onyx', // Deep voice, good for rap
-      input: text,
-      speed: 1.0,
+    // If no ElevenLabs key, return empty response (skip TTS)
+    if (!process.env.ELEVENLABS_API_KEY) {
+      console.log('No ElevenLabs API key, skipping TTS')
+      return new NextResponse(null, { status: 204 })
+    }
+
+    // Use ElevenLabs free tier for TTS with turbo v2.5 model
+    const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/pNInz6obpgDQGcFmaJgB', {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': process.env.ELEVENLABS_API_KEY,
+      },
+      body: JSON.stringify({
+        text: text,
+        model_id: 'eleven_turbo_v2_5',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+        },
+      }),
     })
 
-    const buffer = Buffer.from(await mp3.arrayBuffer())
+    if (!response.ok) {
+      console.error('ElevenLabs error:', response.status, await response.text())
+      // Don't fail the whole request, just skip TTS
+      return new NextResponse(null, { status: 204 })
+    }
+
+    const audioBuffer = await response.arrayBuffer()
+    const buffer = Buffer.from(audioBuffer)
 
     return new NextResponse(buffer, {
       headers: {
@@ -33,9 +52,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('TTS error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to generate speech' },
-      { status: 500 }
-    )
+    // Don't fail the request, just skip TTS
+    return new NextResponse(null, { status: 204 })
   }
 }

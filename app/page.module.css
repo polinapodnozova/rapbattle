@@ -207,6 +207,36 @@
   border-color: rgba(255, 255, 255, 0.5);
 }
 
+/* Beat Toggle */
+.beatToggle {
+  background: linear-gradient(135deg, #ff6b00, #ff9500);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.8rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+  margin: 1rem 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.beatToggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 0, 0.6);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(255, 107, 0, 0.8);
+  }
+}
+
 /* Recording Screen */
 .recording {
   text-align: center;
@@ -510,12 +540,14 @@
   resize: vertical;
   min-height: 200px;
   line-height: 1.8;
-  pointer-events: auto;
+  pointer-events: auto !important;
   user-select: text;
   -webkit-user-select: text;
-  cursor: text;
+  cursor: text !important;
   transition: all 0.3s ease;
   box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 10;
 }
 
 .lyricsInput::placeholder {
