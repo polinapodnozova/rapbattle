@@ -19,9 +19,14 @@ export async function POST(request: NextRequest) {
     // Adjust difficulty based on player choice
     let adjustedRound = roundNumber
     if (difficulty === 'easy') {
-      adjustedRound = Math.ceil(roundNumber / 2) // AI improves slower
+      // Easy: Starts at 1-2, improves very slowly (0.5 per round)
+      adjustedRound = 1 + Math.floor(roundNumber * 0.5)
+    } else if (difficulty === 'medium') {
+      // Medium: Starts at 3-4, improves normally (1 per round)
+      adjustedRound = 3 + (roundNumber - 1)
     } else if (difficulty === 'hard') {
-      adjustedRound = roundNumber + 4 // AI starts stronger
+      // Hard: Starts at 8-9, improves fast (1.5 per round)
+      adjustedRound = 8 + Math.floor((roundNumber - 1) * 1.5)
     }
 
     // Determine AI difficulty based on adjusted round number

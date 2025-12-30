@@ -199,25 +199,52 @@ export default function Home() {
   }
 
   const startGame = async () => {
-    const randomTopicData = topics[Math.floor(Math.random() * topics.length)]
-    const randomSide = randomTopicData.sides[Math.floor(Math.random() * 2)]
-    setTopic(randomTopicData.topic)
-    setUserSide(randomSide)
+    setGameState('recording')
+    
+    let generatedTopic = ''
+    let generatedSide = ''
+    
+    // Generate a random topic using AI
+    try {
+      const topicResponse = await fetch('/api/generate-topic', {
+        method: 'POST',
+      })
+      
+      if (!topicResponse.ok) {
+        throw new Error('Failed to generate topic')
+      }
+      
+      const { topic, sides } = await topicResponse.json()
+      const randomSide = sides[Math.floor(Math.random() * 2)]
+      
+      generatedTopic = topic
+      generatedSide = randomSide
+      
+      setTopic(topic)
+      setUserSide(randomSide)
+    } catch (error) {
+      console.error('Error generating topic:', error)
+      // Fallback to a default topic
+      generatedTopic = 'Pizza vs Burgers'
+      generatedSide = 'Pizza'
+      setTopic(generatedTopic)
+      setUserSide(generatedSide)
+    }
+    
     setRoundNumber(1)
     setBattleHistory([])
     setBattle(null)
     setAudioUrl(null)
     setTypedLyrics('')
-    setGameState('recording')
     startBeat()
     
-    // Generate background image
+    // Generate background image with the topic we just generated
     setIsGeneratingImage(true)
     try {
       const imageResponse = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: randomTopicData.topic, userSide: randomSide }),
+        body: JSON.stringify({ topic: generatedTopic, userSide: generatedSide }),
       })
       
       if (imageResponse.ok) {
